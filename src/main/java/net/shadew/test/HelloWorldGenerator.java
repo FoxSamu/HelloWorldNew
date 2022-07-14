@@ -27,6 +27,10 @@ public class HelloWorldGenerator {
         return "Hello world!";
     }
 
+    public static String messageFurry() {
+        return "Henlo world UwU~";
+    }
+
     public static void main(String[] args) throws Throwable {
         // System.out.println(message()); but it's overly complicated
         // I should add this to HelloWorld50x haha
@@ -51,7 +55,7 @@ public class HelloWorldGenerator {
             /* exceptions */ null
         );
 
-        MethodType bootstrapType = MethodType.methodType(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class);
+        MethodType bootstrapType = MethodType.methodType(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class, int.class);
 
         mv.visitCode();
         // INVOKEDYNAMIC    (this is where the magic happens)
@@ -60,10 +64,12 @@ public class HelloWorldGenerator {
         mv.visitInvokeDynamicInsn(
             "what", "()Ljava/lang/String;",
             // The name 'what' is completely unused, the descriptor return type only defines what ends up on the stack
-            new Handle(H_INVOKESTATIC, Type.getInternalName(HelloWorldGenerator.class), "bootstrap", bootstrapType.descriptorString(), false)
+            new Handle(H_INVOKESTATIC, Type.getInternalName(HelloWorldGenerator.class), "bootstrap", bootstrapType.descriptorString(), false),
+            // Argument to the bootstrap function
+            args.length > 0 && args[0].equals("furry")
         );
         // IRETURN
-        mv.visitInsn(IRETURN);
+        mv.visitInsn(ARETURN);
         // MAXS (done by COMPUTE_MAXS)
         mv.visitMaxs(-1, -1);
 
@@ -95,8 +101,8 @@ public class HelloWorldGenerator {
     // Here we tell the JVM what this INVOKEDYNAMIC instruction is actually supposed to do, which is in our case
     // to just call 'message'. If the JVM gets to that particular INVOKEDYNAMIC instruction again, it won't call
     // this method again as it already linked it to a call site.
-    public static CallSite bootstrap(MethodHandles.Lookup lookup, String name, MethodType type) throws Exception {
+    public static CallSite bootstrap(MethodHandles.Lookup lookup, String name, MethodType type, int furry) throws Exception {
         MethodType dynType = MethodType.methodType(String.class);
-        return new ConstantCallSite(lookup.findStatic(HelloWorldGenerator.class, "message", dynType));
+        return new ConstantCallSite(lookup.findStatic(HelloWorldGenerator.class, "message" + (furry != 0 ? "Furry" : ""), dynType));
     }
 }
